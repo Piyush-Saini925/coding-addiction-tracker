@@ -672,6 +672,28 @@ function FocusTimer({ onComplete }: { onComplete: (duration: number) => Promise<
   const [completionNotice, setCompletionNotice] = useState(false);
   const onCompleteRef = useRef(onComplete);
   const completingRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const alertCompletion = () => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Focus session complete', {
+        body: 'XP saved. Take a short break, then start the next mission.',
+      });
+    }
+
+    const audioContext = audioContextRef.current;
+    if (audioContext) {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.35);
+    }
+  };
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -711,6 +733,7 @@ function FocusTimer({ onComplete }: { onComplete: (duration: number) => Promise<
         setEndAt(null);
         setSaving(true);
         setCompletionNotice(true);
+        alertCompletion();
         onCompleteRef.current(duration).finally(() => {
           setSaving(false);
           completingRef.current = false;
@@ -721,7 +744,17 @@ function FocusTimer({ onComplete }: { onComplete: (duration: number) => Promise<
     return () => window.clearInterval(interval);
   }, [duration, endAt, running]);
 
-  const start = () => {
+  const start = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext();
+    }
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
     const target = Date.now() + duration * 60 * 1000;
     setEndAt(target);
     setSecondsLeft(duration * 60);
@@ -746,6 +779,7 @@ function FocusTimer({ onComplete }: { onComplete: (duration: number) => Promise<
     setSecondsLeft(0);
     setSaving(true);
     setCompletionNotice(true);
+    alertCompletion();
     await onCompleteRef.current(duration);
     setSaving(false);
   };
