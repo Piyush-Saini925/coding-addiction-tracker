@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getSiteUrl, hasSupabaseConfig, supabase } from './lib/supabase';
 import type {
-  Badge,
   DailyLog,
   FocusSession,
   Mission,
@@ -35,16 +34,6 @@ type AppData = {
   missionCompletions: MissionCompletion[];
   focusSessions: FocusSession[];
 };
-
-const emptyData = (profile: Profile): AppData => ({
-  profile,
-  logs: [],
-  tasks: [],
-  taskCompletions: [],
-  missions: [],
-  missionCompletions: [],
-  focusSessions: [],
-});
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
