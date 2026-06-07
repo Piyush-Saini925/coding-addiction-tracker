@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getSiteUrl, hasSupabaseConfig, supabase } from './lib/supabase';
 import type {
@@ -466,12 +466,12 @@ function Dashboard({ authMessage, user }: { authMessage: string; user: User }) {
     await loadData();
   };
 
-  const completeFocus = useCallback(async (duration: number) => {
+  const completeFocus = async (duration: number) => {
     await supabase.from('focus_sessions').insert({ user_id: user.id, date: today, duration_minutes: duration });
     await gainXp(15, false);
     setMessage('+15 XP focus session completed');
     await loadData();
-  }, [data, notes, today, user.id]);
+  };
 
   const copyJourney = async () => {
     const report = buildJourneyReport({ ...data, badges: stats.badges, streaks: stats.streaks });
